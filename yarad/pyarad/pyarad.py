@@ -27,49 +27,44 @@ class pyarad:
 		self.conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		self.conn.connect(socket_file)
 	def close(self):
-		if self.initialized == True:
-			self.conn.send("!close")
-			self.conn.close()
-			self.initialized = False
-		else:
+		if self.initialized != True:
 			return None
+		self.conn.send("!close")
+		self.conn.close()
+		self.initialized = False
 
 	# Functions to dump files
 	def zdump_file(self, filename):
-		f = open(filename, "rb")
-		data = f.read()
-		f.close()
+		with open(filename, "rb") as f:
+			data = f.read()
 		return zlib.compress(data, 9)
 	def zdump_stream(self, filebuffer):
 		return zlib.compress(filebuffer, 9)
 
 	# Scanning functions
 	def scan_file(self, filename):
-		if self.initialized == True:
-			if os.path.exists(filename):
-				if self.net_socket == True:
-					self.conn.send(self.zdump_file(filename))
-				else:
-					self.conn.send(os.path.abspath(filename))
-				return ast.literal_eval(self.conn.recv(1024))
-			else:
-				return []
-		else:
+		if self.initialized != True:
 			return None
-	def scan_stream(self, filebuffer):
-		if self.initialized == True:
+		if os.path.exists(filename):
 			if self.net_socket == True:
-				self.conn.send(self.zdump_stream(filebuffer))
+				self.conn.send(self.zdump_file(filename))
 			else:
-				filename = "/tmp/.%s" % (str(uuid.uuid4()))
-				f = open(filename, "wb")
-				f.write(filebuffer)
-				f.close()
-				self.conn.send(filename)
-			result = ast.literal_eval(self.conn.recv(1024))
-			if self.net_socket == False:
-				os.unlink(filename)
-			return result
+				self.conn.send(os.path.abspath(filename))
+			return ast.literal_eval(self.conn.recv(1024))
 		else:
+			return []
+	def scan_stream(self, filebuffer):
+		if self.initialized != True:
 			return None
+		if self.net_socket == True:
+			self.conn.send(self.zdump_stream(filebuffer))
+		else:
+			filename = f"/tmp/.{str(uuid.uuid4())}"
+			with open(filename, "wb") as f:
+				f.write(filebuffer)
+			self.conn.send(filename)
+		result = ast.literal_eval(self.conn.recv(1024))
+		if self.net_socket == False:
+			os.unlink(filename)
+		return result
 

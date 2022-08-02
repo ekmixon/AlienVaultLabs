@@ -160,11 +160,11 @@ class PluginValidator(object):
         '''
         Collate the Regexp labels used in each UserData field to expose inconsistency to the user
         '''
-        if option.lower() in self._userlabels:
-            if self._plugin.get(rule, option) in self._userlabels[option]:
-                pass   #We've seen this one before
-            else:
-                self._userlabels[option].append(self._plugin.get(rule, option))
+        if (
+            option.lower() in self._userlabels
+            and self._plugin.get(rule, option) not in self._userlabels[option]
+        ):
+            self._userlabels[option].append(self._plugin.get(rule, option))
         
         
     

@@ -18,20 +18,24 @@ def flash_cws(f):
 	with open(f, 'rb') as fh:
 		try:
 			c = fh.read()
-			tf.file.write('FWS' + c[3] + c[4:8] + decompress(c[8:]))
+			tf.file.write(f'FWS{c[3]}{c[4:8]}{decompress(c[8:])}')
 			tf.file.flush()
 		except:
 			raise NameError("Corrupted File")
-	print "[*] Created: %s" % (tf.name)
+	tf = tempfile.NamedTemporaryFile(delete=False)
 	return tf.name
 
 filetypes = {'flash_cws' : flash_cws}
 
 def unpack(f):
-	for i in finger_rules.match(f):
-		if (i.rule in filetypes):
-			return filetypes[i.rule](f)
-	return None
+	return next(
+		(
+			filetypes[i.rule](f)
+			for i in finger_rules.match(f)
+			if (i.rule in filetypes)
+		),
+		None,
+	)
 
 def delete(f):
 	print "[*] Delete: %s" % (f)

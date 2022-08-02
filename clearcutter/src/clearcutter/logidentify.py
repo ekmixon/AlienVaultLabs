@@ -56,18 +56,13 @@ class ClusterNode(object):
         if len(self.Children) == 0:
             #print "No Children"
             return None
-        else:
-            for child in self.Children:
-                if (child.ContentHash == hash(MatchContent)):
-                    #print "Found Child Match : " + child.Content
-                    return child
-                else:
-                    return None
+        for child in self.Children:
+            return child if (child.ContentHash == hash(MatchContent)) else None
 
               
     def MatchNephew(self, MatchContent):
         """Find Nephew Match"""
-        if self.Parent == None: #This node is the root node
+        if self.Parent is None: #This node is the root node
             return None
         for sibling in self.Parent.Children:
             if len(sibling.Children) > 0 :  # no point if sibling has no children
@@ -91,7 +86,7 @@ class ClusterNode(object):
             if len(currentNode.Parent.Children) > ClusterGroup.VarThreshold:
                 parentpath = "[VARIABLE]" + " " + parentpath
             else:
-                parentpath = currentNode.Content + " " + parentpath
+                parentpath = f"{currentNode.Content} {parentpath}"
             currentNode = currentNode.Parent
         return parentpath
 
@@ -137,26 +132,26 @@ class ClusterGroup(object):
 
 
         def IsEndNode(self, Node):
-                '''
+            '''
                 Is This Node the final word of a log template?
                 
                 @return: True or False
                 '''
-                endnode = False
-                hasNephews = False
-                if (len(Node.Children) is 0):  #I'm an EndNode for a log wording cluster    
-                        if Node.Parent is not None: #let's make sure our siblings are all endnodes too, and this is really var data                
-                                for sibling in Node.Parent.Children:
-                                        if len(sibling.Children) > 0 : 
-                                                hasNephews = True 
-                                if (hasNephews is False) and (len(Node.Parent.Children) >= ClusterGroup.VarThreshold):  #log event ends in a variable 
-                                        endnode = True
-                                if (hasNephews is False) and (len(Node.Parent.Children) == 1) : #log event ends in a fixed string
-                                        endnode = True
-                if endnode is True:
-                        entry = Node.GeneratePath()
-                        if entry not in self.entries: 
-                                self.entries.append(entry)
+            endnode = False
+            hasNephews = False
+            if (len(Node.Children) is 0) and Node.Parent is not None:
+                for sibling in Node.Parent.Children:
+                        if len(sibling.Children) > 0 : 
+                                hasNephews = True
+                if hasNephews is False:
+                    if len(Node.Parent.Children) >= ClusterGroup.VarThreshold:
+                        endnode = True
+                    if len(Node.Parent.Children) == 1:
+                        endnode = True
+            if endnode:
+                entry = Node.GeneratePath()
+                if entry not in self.entries: 
+                        self.entries.append(entry)
                 
 
         def BuildResultsTree(self, node):

@@ -47,12 +47,16 @@ def dipatch_client_unix_file(conn, rules):
 				uf = unpack.unpack(f)
 				if uf:
 					f = uf
-				matches = []
-				for i in rules.match(f):
-					matches.append({
-							"name": i.rule, "namespace": i.namespace,
-							"meta": i.meta, "tags": i.tags
-						       })
+				matches = [
+					{
+						"name": i.rule,
+						"namespace": i.namespace,
+						"meta": i.meta,
+						"tags": i.tags,
+					}
+					for i in rules.match(f)
+				]
+
 				conn.send(str(matches))
 				if uf:
 					unpack.delete(uf)
@@ -70,21 +74,24 @@ def dispatch_client_inet_socket(conn, rules):
 			if f == "!close":
 				break
 			sample_stream = zlib.decompress(f)
-			matches = []
-			for i in rules.match(data=sample_stream):
-				matches.append({
-						"name": i.rule, "namespace": i.namespace,
-						"meta": i.meta, "tags": i.tags
-					       })
+			matches = [
+				{
+					"name": i.rule,
+					"namespace": i.namespace,
+					"meta": i.meta,
+					"tags": i.tags,
+				}
+				for i in rules.match(data=sample_stream)
+			]
+
 			conn.send(str(matches))
 		except:
 			break
 	conn.close()
 
 def write_pidfile(pidfile):
-	f = open(pidfile, "w")
-	f.write("%s\n" % (str(os.getpid())))
-	f.close()
+	with open(pidfile, "w") as f:
+		f.write("%s\n" % (str(os.getpid())))
 
 def mainloop(rules, srv_config):
 	if srv_config["type"] == "unix":

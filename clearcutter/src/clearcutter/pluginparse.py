@@ -61,10 +61,7 @@ class ParsePlugin(object):
         self.LoadPlugin()
         
     def hitems(self, config, section):
-        itemhash = {}
-        for item in config.items(section):
-            itemhash[item[0]] = self._strip_value(item[1])
-        return itemhash
+        return {item[0]: self._strip_value(item[1]) for item in config.items(section)}
     
     def _strip_value(self, value):
         from string import strip
